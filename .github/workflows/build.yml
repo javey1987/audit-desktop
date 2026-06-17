@@ -5,41 +5,49 @@ on:
     tags: ["v*"]
 
 jobs:
-  build:
+  build-x86:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-
       - name: Install system deps
         run: |
           sudo apt update -qq
           sudo apt install -y -qq libwebkit2gtk-4.1-dev libgtk-3-dev \
             libayatana-appindicator3-dev librsvg2-dev
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install frontend deps
-        run: npm install
-
-      - name: Build frontend
-        run: npm run build
-
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2"
-
-      - name: Build Tauri app
-        run: cargo tauri build
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install
+      - run: npm run build
+      - run: cargo install tauri-cli --version "^2"
+      - run: cargo tauri build
         working-directory: src-tauri
-
-      - name: Upload AppImage
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: audit-desktop-x86_64
+          path: src-tauri/target/release/bundle/
+
+  build-arm:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          sudo apt update -qq
+          sudo apt install -y -qq libwebkit2gtk-4.1-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install
+      - run: npm run build
+      - run: cargo install tauri-cli --version "^2"
+      - run: cargo tauri build
+        working-directory: src-tauri
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audit-desktop-aarch64
           path: src-tauri/target/release/bundle/
