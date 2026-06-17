@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/nicegram/nicegram-desktop/refs/heads/main/src-tauri/tauri.conf.json",
   "productName": "审计砖家",
   "version": "0.1.0",
   "identifier": "com.audit-desktop.app",
@@ -10,7 +9,6 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "title": "审计砖家",
     "windows": [
       {
         "title": "审计砖家",
