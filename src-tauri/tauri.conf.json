@@ -1,0 +1,45 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicegram/nicegram-desktop/refs/heads/main/src-tauri/tauri.conf.json",
+  "productName": "审计砖家",
+  "version": "0.1.0",
+  "identifier": "com.audit-desktop.app",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "title": "审计砖家",
+    "windows": [
+      {
+        "title": "审计砖家",
+        "width": 1200,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "审计砖家 - 本地脱敏AI审计",
+    "longDescription": "本地数据审计工具，文件不出桌面，脱敏后调用 DeepSeek 进行分析"
+  },
+  "plugins": {
+    "dialog": {},
+    "fs": {
+      "scope": ["$APPDATA/**", "$DOCUMENT/**", "$DESKTOP/**", "$HOME/**"]
+    }
+  }
+}

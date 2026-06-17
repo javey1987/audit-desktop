@@ -1,0 +1,24 @@
+[package]
+name = "audit-desktop"
+version = "0.1.0"
+edition = "2021"
+description = "审计砖家桌面版 — 本地脱敏后调用 DeepSeek"
+
+[lib]
+name = "audit_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+regex = "1"
+calamine = "0.26"
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+tokio = { version = "1", features = ["full"] }
+csv = "1.3"

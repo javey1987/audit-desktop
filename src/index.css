@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f8f6f3;
+  --fg: #1a1a1a;
+  --accent: oklch(58% 0.16 35);
+  --accent-light: oklch(70% 0.10 35);
+  --muted: oklch(75% 0.02 65);
+  --subtle: oklch(92% 0.01 65);
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "IBM Plex Sans", "Source Han Sans SC", system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+}
