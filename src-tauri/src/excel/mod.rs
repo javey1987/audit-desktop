@@ -65,11 +65,12 @@ pub fn read_xlsx(path: &str) -> Result<ExcelData, String> {
         rows.push(values);
     }
 
+    let total_rows = rows.len();
     Ok(ExcelData {
         sheet_name,
         columns,
         rows,
-        total_rows: rows.len(),
+        total_rows,
     })
 }
 
@@ -109,11 +110,12 @@ pub fn read_csv(path: &str) -> Result<ExcelData, String> {
         rows.push(values);
     }
 
+    let total_rows = rows.len();
     Ok(ExcelData {
         sheet_name: "Sheet1".into(),
         columns,
         rows,
-        total_rows: rows.len(),
+        total_rows,
     })
 }
 

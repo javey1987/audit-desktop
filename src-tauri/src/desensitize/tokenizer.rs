@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
-use crate::scanner::{EntityType, MatchResult, Scanner};
+use crate::desensitize::scanner::{EntityType, MatchResult, Scanner};
 
 /// 一条替换映射
 #[derive(Debug, Clone, Serialize, Deserialize)]
