@@ -17,6 +17,8 @@ pub enum ColumnSensitiveType {
     BankCard,     // 银行卡号/账号
     Email,        // 邮箱
     Address,      // 地址
+    Region,       // 地区
+    GovDept,      // 党政机关部门
     Money,        // 金额
     Date,         // 日期
     Project,      // 项目
@@ -33,6 +35,8 @@ impl ColumnSensitiveType {
             ColumnSensitiveType::BankCard => "BANK_CARD",
             ColumnSensitiveType::Email => "EMAIL",
             ColumnSensitiveType::Address => "ADDR",
+            ColumnSensitiveType::Region => "REGION",
+            ColumnSensitiveType::GovDept => "GOVDEPT",
             ColumnSensitiveType::Money => "MONEY",
             ColumnSensitiveType::Date => "DATE",
             ColumnSensitiveType::Project => "PROJECT",
@@ -48,6 +52,8 @@ impl ColumnSensitiveType {
             ColumnSensitiveType::BankCard => "银行卡号/账号",
             ColumnSensitiveType::Email => "邮箱",
             ColumnSensitiveType::Address => "地址",
+            ColumnSensitiveType::Region => "地区",
+            ColumnSensitiveType::GovDept => "党政机关部门",
             ColumnSensitiveType::Money => "金额",
             ColumnSensitiveType::Date => "日期",
             ColumnSensitiveType::Project => "项目",

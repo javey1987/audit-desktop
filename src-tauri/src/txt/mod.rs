@@ -41,11 +41,12 @@ pub fn read_txt(path: &str) -> Result<ExcelData, String> {
         .map(|p| vec![p.to_string()])
         .collect();
 
+    let total_rows = rows.len();
     Ok(ExcelData {
         sheet_name: "正文".into(),
         columns: vec![column],
         rows,
-        total_rows: rows.len(),
+        total_rows,
     })
 }
 
