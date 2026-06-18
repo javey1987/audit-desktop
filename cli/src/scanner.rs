@@ -213,37 +213,38 @@ fn build_builtin_patterns() -> Vec<(EntityType, Regex)> {
     let mut compiled: Vec<(EntityType, Regex)> = Vec::new();
 
     // 辅助：添加规则
-    let mut add = |et: EntityType, pattern: &str| {
-        match Regex::new(pattern) {
+    let mut add = |et: EntityType, pattern: &str|  {
+                match regex::RegexBuilder::new(pattern).unicode(true).build() {
             Ok(re) => compiled.push((et, re)),
+            Err(e) => eprintln!("[warn] 正则编译失败: {} — {}", pattern, e),
             Err(e) => eprintln!("[warn] 正则编译失败: {} — {}", pattern, e),
         }
     };
 
     // ---- 手机号 ----
-    add(EntityType::Phone, r"\b1[3-9]\d{9}\b");
-    add(EntityType::Phone, r"\b0\d{2,3}[-\s]?\d{7,8}\b");
+    add(EntityType::Phone, r"1[3-9]\d{9}");
+    add(EntityType::Phone, r"0\d{2,3}[-\s]?\d{7,8}");
     add(EntityType::Phone, r"(\+86)[-\s]?1[3-9]\d{9}");
 
     // ---- 身份证 ----
-    add(EntityType::IdCard, r"\b[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]\b");
-    add(EntityType::IdCard, r"\b[1-9]\d{7}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}\b");
+    add(EntityType::IdCard, r"[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]");
+    add(EntityType::IdCard, r"[1-9]\d{7}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}");
 
     // ---- 银行卡 ----
-    add(EntityType::BankCard, r"\b[34569]\d{14,18}\b");
+    add(EntityType::BankCard, r"[34569]\d{14,18}");
 
     // ---- 邮箱 ----
-    add(EntityType::Email, r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b");
+    add(EntityType::Email, r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}");
 
     // ---- IP地址 ----
-    add(EntityType::Ip, r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b");
+    add(EntityType::Ip, r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}");
 
     // ---- URL ----
     add(EntityType::Url, r"https?://[^\s,，。；;）\)\]】}]+");
 
     // ---- 金额 ----
     add(EntityType::Money, r"[¥￥]\s*[\d,]+(?:\.\d+)?(?:\s*[万亿])?");
-    add(EntityType::Money, r"\b\d+(?:,\d{3})*(?:\.\d+)?\s*(?:元|美元|欧元|英镑|日元|万|亿)\b");
+    add(EntityType::Money, r"\d+(?:,\d{3})*(?:\.\d+)?\s*(?:元|美元|欧元|英镑|日元|万|亿)");
     add(EntityType::Money, r"[零壹贰叁肆伍陆柒捌玖拾佰仟万亿]+[元整]");
 
     // ---- 中文人名（上下文相关的简单匹配） ----

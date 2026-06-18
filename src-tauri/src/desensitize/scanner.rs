@@ -213,37 +213,38 @@ fn build_builtin_patterns() -> Vec<(EntityType, Regex)> {
     let mut compiled: Vec<(EntityType, Regex)> = Vec::new();
 
     // 辅助：添加规则
-    let mut add = |et: EntityType, pattern: &str| {
-        match Regex::new(pattern) {
+    let mut add = |et: EntityType, pattern: &str|  {
+                match regex::RegexBuilder::new(pattern).unicode(true).build() {
             Ok(re) => compiled.push((et, re)),
+            Err(e) => eprintln!("[warn] 正则编译失败: {} — {}", pattern, e),
             Err(e) => eprintln!("[warn] 正则编译失败: {} — {}", pattern, e),
         }
     };
 
     // ---- 手机号 ----
-    add(EntityType::Phone, r"\b1[3-9]\d{9}\b");
-    add(EntityType::Phone, r"\b0\d{2,3}[-\s]?\d{7,8}\b");
+    add(EntityType::Phone, r"1[3-9]\d{9}");
+    add(EntityType::Phone, r"0\d{2,3}[-\s]?\d{7,8}");
     add(EntityType::Phone, r"(\+86)[-\s]?1[3-9]\d{9}");
 
     // ---- 身份证 ----
-    add(EntityType::IdCard, r"\b[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]\b");
-    add(EntityType::IdCard, r"\b[1-9]\d{7}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}\b");
+    add(EntityType::IdCard, r"[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]");
+    add(EntityType::IdCard, r"[1-9]\d{7}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}");
 
     // ---- 银行卡 ----
-    add(EntityType::BankCard, r"\b[34569]\d{14,18}\b");
+    add(EntityType::BankCard, r"[34569]\d{14,18}");
 
     // ---- 邮箱 ----
-    add(EntityType::Email, r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b");
+    add(EntityType::Email, r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}");
 
     // ---- IP地址 ----
-    add(EntityType::Ip, r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b");
+    add(EntityType::Ip, r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}");
 
     // ---- URL ----
     add(EntityType::Url, r"https?://[^\s,，。；;）\)\]】}]+");
 
     // ---- 金额 ----
     add(EntityType::Money, r"[¥￥]\s*[\d,]+(?:\.\d+)?(?:\s*[万亿])?");
-    add(EntityType::Money, r"\b\d+(?:,\d{3})*(?:\.\d+)?\s*(?:元|美元|欧元|英镑|日元|万|亿)\b");
+    add(EntityType::Money, r"\d+(?:,\d{3})*(?:\.\d+)?\s*(?:元|美元|欧元|英镑|日元|万|亿)");
     add(EntityType::Money, r"[零壹贰叁肆伍陆柒捌玖拾佰仟万亿]+[元整]");
 
     // ---- 中文人名（上下文相关的简单匹配） ----
@@ -259,7 +260,7 @@ fn build_builtin_patterns() -> Vec<(EntityType, Regex)> {
         r"(?:北京|天津|上海|重庆|河北|山西|辽宁|吉林|黑龙江|江苏|浙江|安徽|福建|江西|山东|河南|湖北|湖南|广东|海南|四川|贵州|云南|陕西|甘肃|青海|台湾|内蒙古|广西|西藏|宁夏|新疆|香港|澳门)[\u4e00-\u9fff]{2,}(?:省|市|区|县|镇|乡|街道|路|街|巷|大道)[\u4e00-\u9fff\d\-]{0,}(?:号|号院|号楼|室|单元)"
     );
 
-    // ---- 地区名 ----
+    // ---- 地区名（审计场景中可推断被审计单位位置） ----
     add(EntityType::Region,
         r"(?:北京|天津|上海|重庆|河北|山西|辽宁|吉林|黑龙江|江苏|浙江|安徽|福建|江西|山东|河南|湖北|湖南|广东|海南|四川|贵州|云南|陕西|甘肃|青海|台湾|内蒙古|广西|西藏|宁夏|新疆|香港|澳门)(?:省|市|自治区|特别行政区)");
     add(EntityType::Region,
@@ -271,6 +272,12 @@ fn build_builtin_patterns() -> Vec<(EntityType, Regex)> {
     add(EntityType::GovDept,
         r"(?:中共|国务院|中央|国家|省|市|县|区)[\u4e00-\u9fff]{1,}(?:委员会|办公室|管理局|指挥部|领导小组|工作组)");
 
+    // ---- 公司/组织名 ----
+    add(EntityType::Org, r"(?:供应商|客户|甲方|乙方|承包方|采购方|委托方|投标方)[：:]\s*[\u4e00-\u9fff]{2,20}(?:公司|企业|集团|厂)?");
+    add(EntityType::Org, r"[\u4e00-\u9fff]{2,10}(?:有限公司|有限责任公司|股份有限公司|集团有限公司)");
+    // 纯公司名匹配需要至少4个字才能算公司
+    add(EntityType::Org, r"[\u4e00-\u9fff]{4,8}(?:公司|集团|企业)");
+    add(EntityType::Org, r"(?:单位|公司名称|企业名称|组织名称)[：:]\s*[\u4e00-\u9fff]{2,20}");
     // ---- 项目名 ----
     add(EntityType::Project, r"项目[：:]\s*[\u4e00-\u9fff]{2,10}");
     add(EntityType::Project, r"[\u4e00-\u9fff]{2,8}(?:计划|方案|工程|系统)(?:\s+v?[\d.]+)?");
@@ -311,12 +318,24 @@ mod tests {
         let scanner = Scanner::new();
         let text = "审计组对河北省石家庄市新华区财政局开展了延伸审计";
         let matches = scanner.scan(text);
-        assert!(matches.iter().any(|m| matches!(m.entity_type, EntityType::Region)));
+        assert!(matches.iter().any(|m| matches!(m.entity_type, EntityType::Region)),
+            "应识别出地区名：{:?}", matches);
+    }
+
+    #[test]
+    fn test_govdept_scan() {
+        let scanner = Scanner::new();
+        let text = "根据财政部和国家税务总局的要求，XX局开展了专项检查";
+        let matches = scanner.scan(text);
+        assert!(matches.iter().any(|m| matches!(m.entity_type, EntityType::GovDept)),
+            "应识别出机关部门：{:?}", matches);
     }
 
     #[test]
     fn test_money_level() {
+        // 金额应属于 Keep 级别
         assert_eq!(EntityType::Money.level(), SensitiveLevel::Keep);
+        // 人名应属于 Mask 级别
         assert_eq!(EntityType::Person.level(), SensitiveLevel::Mask);
     }
 }
