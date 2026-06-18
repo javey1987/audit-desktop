@@ -20,7 +20,8 @@ jobs:
       - name: Install Zig
         run: |
           curl -fsSL https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz | tar xJ
-          sudo mv zig-linux-x86_64-0.13.0/zig /usr/local/bin/
+          sudo mv zig-linux-x86_64-0.13.0 /usr/local/lib/zig-0.13.0
+          sudo ln -s /usr/local/lib/zig-0.13.0/zig /usr/local/bin/zig
           zig version
       - run: npm install && npm run build
       - name: Build binary (glibc 2.28 compat)
@@ -57,7 +58,8 @@ jobs:
       - name: Install Zig
         run: |
           curl -fsSL https://ziglang.org/download/0.13.0/zig-linux-aarch64-0.13.0.tar.xz | tar xJ
-          sudo mv zig-linux-aarch64-0.13.0/zig /usr/local/bin/
+          sudo mv zig-linux-aarch64-0.13.0 /usr/local/lib/zig-0.13.0
+          sudo ln -s /usr/local/lib/zig-0.13.0/zig /usr/local/bin/zig
           zig version
       - run: npm install && npm run build
       - name: Build binary (glibc 2.28 compat)
