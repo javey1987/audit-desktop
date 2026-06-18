@@ -271,6 +271,12 @@ fn build_builtin_patterns() -> Vec<(EntityType, Regex)> {
     add(EntityType::GovDept,
         r"(?:中共|国务院|中央|国家|省|市|县|区)[\u4e00-\u9fff]{1,}(?:委员会|办公室|管理局|指挥部|领导小组|工作组)");
 
+    // ---- 公司/组织名 ----
+    add(EntityType::Org, r"(?:供应商|客户|甲方|乙方|承包方|采购方|委托方|投标方)[：:]\s*[\u4e00-\u9fff]{2,20}(?:公司|企业|集团|厂)?");
+    add(EntityType::Org, r"[\u4e00-\u9fff]{2,10}(?:有限公司|有限责任公司|股份有限公司|集团有限公司)");
+    // 纯公司名匹配需要至少4个字才能算公司
+    add(EntityType::Org, r"[\u4e00-\u9fff]{4,8}(?:公司|集团|企业)");
+    add(EntityType::Org, r"(?:单位|公司名称|企业名称|组织名称)[：:]\s*[\u4e00-\u9fff]{2,20}");
     // ---- 项目名 ----
     add(EntityType::Project, r"项目[：:]\s*[\u4e00-\u9fff]{2,10}");
     add(EntityType::Project, r"[\u4e00-\u9fff]{2,8}(?:计划|方案|工程|系统)(?:\s+v?[\d.]+)?");
