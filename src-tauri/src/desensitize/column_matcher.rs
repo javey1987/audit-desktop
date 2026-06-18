@@ -250,7 +250,20 @@ pub fn desensitize_value(value: &str, sens_type: &ColumnSensitiveType) -> String
             }
         }
         // 金额：审计核心比对数据，不脱敏
-        ColumnSensitiveType::Money => value.to_string()
+        ColumnSensitiveType::Money => value.to_string(),
+        // 地区名：替换为"某地区"
+        ColumnSensitiveType::Region => {
+            let v = value.trim();
+            let chars: Vec<char> = v.chars().collect();
+            if chars.len() >= 3 {
+                let prefix: String = chars[..3].iter().collect();
+                format!("{}某某", prefix)
+            } else {
+                "某地区".into()
+            }
+        }
+        // 党政机关部门：替换为"某部门"
+        ColumnSensitiveType::GovDept => "某部门".into(),
         // 日期/时间/项目：不脱敏（通常不敏感）
         ColumnSensitiveType::Date | ColumnSensitiveType::Project => value.to_string(),
         ColumnSensitiveType::Other => value.to_string(),
