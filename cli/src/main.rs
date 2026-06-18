@@ -231,6 +231,83 @@ fn is_image_file(lower: &str) -> bool {
     || lower.ends_with(".webp")
 }
 
+/// 将 .doc 文件转换为纯文本
+/// 优先使用 catdoc（轻量），回退到 libreoffice
+fn convert_doc_to_text(path: &str) -> Result<String, String> {
+    // 方案1：catdoc（推荐，轻量）
+    let output = std::process::Command::new("catdoc")
+        .arg(path)
+        .output();
+
+    if let Ok(out) = output {
+        if out.status.success() {
+            let text = String::from_utf8_lossy(&out.stdout).to_string();
+            if !text.trim().is_empty() {
+                return Ok(text);
+            }
+        }
+    }
+
+    // 方案2：antiword
+    let output = std::process::Command::new("antiword")
+        .arg(path)
+        .output();
+
+    if let Ok(out) = output {
+        if out.status.success() {
+            let text = String::from_utf8_lossy(&out.stdout).to_string();
+            if !text.trim().is_empty() {
+                return Ok(text);
+            }
+        }
+    }
+
+    // 方案3：libreoffice（最重但最可靠）
+    convert_via_libreoffice(path, "doc")
+}
+
+/// 将 .wps 文件转换为纯文本
+fn convert_wps_to_text(path: &str) -> Result<String, String> {
+    convert_via_libreoffice(path, "wps")
+}
+
+/// 使用 libreoffice 将文件转换为纯文本
+fn convert_via_libreoffice(path: &str, _fmt: &str) -> Result<String, String> {
+    let out_dir = std::env::temp_dir().join("desense_tmp");
+    std::fs::create_dir_all(&out_dir).ok();
+
+    let status = std::process::Command::new("libreoffice")
+        .args(["--headless", "--convert-to", "txt:Text",
+               "--outdir", out_dir.to_str().unwrap_or("/tmp"),
+               path])
+        .status()
+        .map_err(|e| {
+            format!(
+                "调用 libreoffice 失败: {}。请安装: sudo apt install libreoffice-writer catdoc",
+                e
+            )
+        })?;
+
+    if !status.success() {
+        return Err(format!("libreoffice 转换失败（exit code: {:?}）", status.code()));
+    }
+
+    // 查找输出的 .txt 文件
+    let base = std::path::Path::new(path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("output");
+    let out_path = out_dir.join(format!("{}.txt", base));
+
+    let text = std::fs::read_to_string(&out_path)
+        .map_err(|e| format!("读取转换结果失败: {}", e))?;
+
+    // 清理临时文件
+    std::fs::remove_file(&out_path).ok();
+
+    Ok(text)
+}
+
 /// 调用 tesseract OCR 识别图片中的文字
 fn ocr_image(path: &str) -> Result<String, String> {
     let output = std::process::Command::new("tesseract")
@@ -405,6 +482,12 @@ fn read_file_content(path: &PathBuf) -> Result<String, String> {
         pdf_parser::extract_text(path.to_str().unwrap())
     } else if lower.ends_with(".docx") {
         docx_parser::extract_text(path.to_str().unwrap())
+    } else if lower.ends_with(".doc") {
+        // .doc 旧版 Word（二进制格式），调用 catdoc 或 libreoffice
+        convert_doc_to_text(path.to_str().unwrap())
+    } else if lower.ends_with(".wps") {
+        // .wps WPS文字格式，调用 libreoffice 转换
+        convert_wps_to_text(path.to_str().unwrap())
     } else if is_image_file(&lower) {
         // 图片 OCR
         ocr_image(path.to_str().unwrap())
