@@ -72,10 +72,10 @@ impl EntityType {
         }
     }
 
-    /// 获取脱敏级别（金额/项目仅标记不替换）
+    /// 获取脱敏级别
     pub fn level(&self) -> SensitiveLevel {
         match self {
-            EntityType::Money | EntityType::Project => SensitiveLevel::Keep,
+            EntityType::Money | EntityType::Project | EntityType::Ip => SensitiveLevel::Keep,
             _ => SensitiveLevel::Mask,
         }
     }
