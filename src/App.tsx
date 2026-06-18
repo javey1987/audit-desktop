@@ -16,7 +16,7 @@ function App() {
   async function pickFile() {
     const selected = await open({
       multiple: false,
-      filters: [{ name: "数据文件", extensions: ["xlsx", "csv", "txt"] }],
+      filters: [{ name: "数据文件", extensions: ["xlsx", "csv", "txt", "pdf", "docx"] }],
     });
     if (selected) {
       setFilePath(selected);

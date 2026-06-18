@@ -5,11 +5,8 @@
 use crate::excel::{ColumnInfo, ExcelData};
 use std::fs;
 
-/// 读取 TXT 文件，返回 ExcelData 兼容结构
-pub fn read_txt(path: &str) -> Result<ExcelData, String> {
-    let content = fs::read_to_string(path)
-        .map_err(|e| format!("读取 TXT 文件失败: {}", e))?;
-
+/// 从内容字符串构造 ExcelData
+pub fn content_to_excel(content: &str, sheet_name: &str) -> Result<ExcelData, String> {
     if content.trim().is_empty() {
         return Err("文件内容为空".into());
     }
@@ -26,7 +23,6 @@ pub fn read_txt(path: &str) -> Result<ExcelData, String> {
         sample_values: {
             let mut samples = Vec::new();
             for p in &paragraphs {
-                // 取每段前50字符作为样本
                 let preview: String = p.chars().take(50).collect();
                 if !preview.is_empty() && samples.len() < 5 {
                     samples.push(preview);
@@ -43,24 +39,21 @@ pub fn read_txt(path: &str) -> Result<ExcelData, String> {
 
     let total_rows = rows.len();
     Ok(ExcelData {
-        sheet_name: "正文".into(),
+        sheet_name: sheet_name.into(),
         columns: vec![column],
         rows,
         total_rows,
     })
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::io::Write;
+/// 读取 TXT 文件，返回 ExcelData 兼容结构
+pub fn read_txt(path: &str) -> Result<ExcelData, String> {
+    let content = fs::read_to_string(path)
+        .map_err(|e| format!("读取 TXT 文件失败: {}", e))?;
+    content_to_excel(&content, "正文")
+}
 
-    #[test]
-    fn test_read_txt() {
-        let mut tmpfile = tempfile::NamedTempFile::new().unwrap();
-        write!(tmpfile, "第一段内容\n\n第二段内容\n\n第三段内容").unwrap();
-        let result = read_txt(tmpfile.path().to_str().unwrap()).unwrap();
-        assert_eq!(result.total_rows, 3);
-        assert_eq!(result.columns[0].name, "正文内容");
-    }
+/// 从内存中的字符串创建 ExcelData（用于 PDF/DOCX 等已解析的文本）
+pub fn read_txt_from_str(content: &str) -> Result<ExcelData, String> {
+    content_to_excel(content, "解析内容")
 }

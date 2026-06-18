@@ -2,8 +2,10 @@
 
 mod commands;
 mod desensitize;
+mod docx_parser;
 mod excel;
 mod llm;
+mod pdf_parser;
 mod txt;
 
 use commands::*;

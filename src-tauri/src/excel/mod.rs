@@ -3,6 +3,8 @@
 use calamine::{open_workbook, Reader, Xlsx};
 use serde::Serialize;
 
+use crate::txt;
+
 /// 一列数据的信息
 #[derive(Debug, Clone, Serialize)]
 pub struct ColumnInfo {
@@ -126,6 +128,15 @@ pub fn read_file(path: &str) -> Result<ExcelData, String> {
         read_csv(path)
     } else if lower.ends_with(".xlsx") {
         read_xlsx(path)
+    } else if lower.ends_with(".txt") {
+        txt::read_txt(path)
+    } else if lower.ends_with(".pdf") {
+        let text = crate::pdf_parser::extract_text(path)?;
+        txt::read_txt_from_str(&text)
+    } else if lower.ends_with(".docx") {
+        let text = crate::docx_parser::extract_text(path)?;
+        txt::read_txt_from_str(&text)
+
     } else {
         Err(format!("不支持的文件格式: {}", path))
     }
