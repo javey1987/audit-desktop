@@ -105,6 +105,15 @@ fn build_column_rules() -> Vec<ColumnRule> {
             sens_type: ColumnSensitiveType::Address,
         },
         ColumnRule {
+            keywords: vec!["地区", "区域", "省份", "省市", "区划", "地域", "region", "district"],
+            sens_type: ColumnSensitiveType::Region,
+        },
+        ColumnRule {
+            keywords: vec!["部门", "处室", "科室", "机关", "单位名称", "机构",
+                          "dept", "department", "bureau", "office"],
+            sens_type: ColumnSensitiveType::GovDept,
+        },
+        ColumnRule {
             keywords: vec!["金额", "总额", "总金额", "价格", "单价", "费用", "支出", "收入",
                           "money", "amount", "price", "cost", "fee", "total", "sum",
                           "budget", "payment"],
@@ -234,17 +243,8 @@ pub fn desensitize_value(value: &str, sens_type: &ColumnSensitiveType) -> String
                 "****".into()
             }
         }
-        // 金额：保留范围，替换具体数字
-        ColumnSensitiveType::Money => {
-            let v = value.trim();
-            if v.contains("合计") || v.len() > 20 {
-                // 合计行、长文本不脱敏
-                v.to_string()
-            } else {
-                // 用[金额]替换
-                "[MASKED]".into()
-            }
-        }
+        // 金额：审计核心比对数据，不脱敏
+        ColumnSensitiveType::Money => value.to_string()
         // 日期/时间/项目：不脱敏（通常不敏感）
         ColumnSensitiveType::Date | ColumnSensitiveType::Project => value.to_string(),
         ColumnSensitiveType::Other => value.to_string(),

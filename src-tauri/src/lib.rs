@@ -4,6 +4,7 @@ mod commands;
 mod desensitize;
 mod excel;
 mod llm;
+mod txt;
 
 use commands::*;
 

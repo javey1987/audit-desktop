@@ -5,6 +5,15 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// 脱敏级别
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum SensitiveLevel {
+    /// 替换为标记（默认）
+    Mask,
+    /// 保留原值，仅标记类型
+    Keep,
+}
+
 /// 实体类型
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EntityType {
@@ -15,6 +24,8 @@ pub enum EntityType {
     BankCard,
     Email,
     Address,
+    Region,
+    GovDept,
     Url,
     Ip,
     Money,
@@ -32,6 +43,8 @@ impl EntityType {
             EntityType::BankCard => "BANK",
             EntityType::Email => "EMAIL",
             EntityType::Address => "ADDR",
+            EntityType::Region => "REGION",
+            EntityType::GovDept => "GOVDEPT",
             EntityType::Url => "URL",
             EntityType::Ip => "IP",
             EntityType::Money => "MONEY",
@@ -49,11 +62,21 @@ impl EntityType {
             EntityType::BankCard => "银行卡号",
             EntityType::Email => "邮箱",
             EntityType::Address => "地址",
+            EntityType::Region => "地区",
+            EntityType::GovDept => "党政机关部门",
             EntityType::Url => "URL",
             EntityType::Ip => "IP地址",
             EntityType::Money => "金额",
             EntityType::Project => "项目名",
             EntityType::Custom(s) => s,
+        }
+    }
+
+    /// 获取脱敏级别（金额/项目仅标记不替换）
+    pub fn level(&self) -> SensitiveLevel {
+        match self {
+            EntityType::Money | EntityType::Project => SensitiveLevel::Keep,
+            _ => SensitiveLevel::Mask,
         }
     }
 }
@@ -236,6 +259,18 @@ fn build_builtin_patterns() -> Vec<(EntityType, Regex)> {
         r"(?:北京|天津|上海|重庆|河北|山西|辽宁|吉林|黑龙江|江苏|浙江|安徽|福建|江西|山东|河南|湖北|湖南|广东|海南|四川|贵州|云南|陕西|甘肃|青海|台湾|内蒙古|广西|西藏|宁夏|新疆|香港|澳门)[\u4e00-\u9fff]{2,}(?:省|市|区|县|镇|乡|街道|路|街|巷|大道)[\u4e00-\u9fff\d\-]{0,}(?:号|号院|号楼|室|单元)"
     );
 
+    // ---- 地区名 ----
+    add(EntityType::Region,
+        r"(?:北京|天津|上海|重庆|河北|山西|辽宁|吉林|黑龙江|江苏|浙江|安徽|福建|江西|山东|河南|湖北|湖南|广东|海南|四川|贵州|云南|陕西|甘肃|青海|台湾|内蒙古|广西|西藏|宁夏|新疆|香港|澳门)(?:省|市|自治区|特别行政区)");
+    add(EntityType::Region,
+        r"[\u4e00-\u9fff]{2,}(?:市|区|县|镇|乡|街道)(?:办事处)?");
+
+    // ---- 党政机关部门 ----
+    add(EntityType::GovDept,
+        r"[\u4e00-\u9fff]{2,}(?:局|委|办|部|厅|处|中心|所|站|院|队|会|社|集团)");
+    add(EntityType::GovDept,
+        r"(?:中共|国务院|中央|国家|省|市|县|区)[\u4e00-\u9fff]{1,}(?:委员会|办公室|管理局|指挥部|领导小组|工作组)");
+
     // ---- 项目名 ----
     add(EntityType::Project, r"项目[：:]\s*[\u4e00-\u9fff]{2,10}");
     add(EntityType::Project, r"[\u4e00-\u9fff]{2,8}(?:计划|方案|工程|系统)(?:\s+v?[\d.]+)?");
@@ -269,5 +304,19 @@ mod tests {
         let text = "邮箱：zhangsan@company.com";
         let matches = scanner.scan(text);
         assert!(matches.iter().any(|m| matches!(m.entity_type, EntityType::Email)));
+    }
+
+    #[test]
+    fn test_region_scan() {
+        let scanner = Scanner::new();
+        let text = "审计组对河北省石家庄市新华区财政局开展了延伸审计";
+        let matches = scanner.scan(text);
+        assert!(matches.iter().any(|m| matches!(m.entity_type, EntityType::Region)));
+    }
+
+    #[test]
+    fn test_money_level() {
+        assert_eq!(EntityType::Money.level(), SensitiveLevel::Keep);
+        assert_eq!(EntityType::Person.level(), SensitiveLevel::Mask);
     }
 }
