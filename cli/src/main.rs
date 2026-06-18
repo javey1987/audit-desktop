@@ -500,7 +500,7 @@ fn read_file_content(path: &PathBuf) -> Result<String, String> {
 
 /// Excel 解析模块（CLI 专用，复用 audit-desktop 的逻辑）
 mod excel_parser {
-    use calamine::{open_workbook, Reader, Xlsx};
+    use calamine::{open_workbook, Reader, Xlsx, Xls};
     use serde::Serialize;
 
     #[derive(Clone, Serialize)]
@@ -519,8 +519,12 @@ mod excel_parser {
 
     pub fn read_file(path: &str) -> Result<ExcelData, String> {
         let lower = path.to_lowercase();
-        if lower.ends_with(".xlsx") || lower.ends_with(".xls") || lower.ends_with(".et") {
+        if lower.ends_with(".xlsx") {
             read_xlsx(path)
+        } else if lower.ends_with(".xls") {
+            read_xls(path)
+        } else if lower.ends_with(".et") {
+            read_xls(path).or_else(|_| read_xlsx(path))
         } else if lower.ends_with(".csv") {
             read_csv(path)
         } else {
@@ -528,12 +532,47 @@ mod excel_parser {
         }
     }
 
-    pub fn read_xlsx(path: &str) -> Result<ExcelData, String> {
-        let mut workbook: Xlsx<_> = open_workbook(path)
-            .map_err(|e| format!("无法打开文件: {}", e))?;
+    fn read_xls(path: &str) -> Result<ExcelData, String> {
+        let mut workbook: Xls<_> = open_workbook(path)
+            .map_err(|e| format!("无法打开 .xls 文件: {}", e))?;
         let sheet_names = workbook.sheet_names().to_vec();
         if sheet_names.is_empty() {
-            return Err("工作簿中没有工作表".into());
+            return Err(format!("文件 '{}' 中没有工作表", path));
+        }
+        let sheet_name = sheet_names[0].clone();
+        let range = workbook.worksheet_range(&sheet_name)
+            .map_err(|e| format!("读取工作表失败: {}", e))?;
+        let mut rows_iter = range.rows();
+        let headers: Vec<String> = match rows_iter.next() {
+            Some(row) => row.iter().map(|c| c.to_string()).collect(),
+            None => return Err("工作表为空".into()),
+        };
+        let col_count = headers.len();
+        let mut columns: Vec<ColumnInfo> = headers.iter()
+            .map(|h| ColumnInfo { name: h.clone(), sample_values: Vec::new() })
+            .collect();
+        let mut rows: Vec<Vec<String>> = Vec::new();
+        for row in rows_iter {
+            let values: Vec<String> = (0..col_count)
+                .map(|i| row.get(i).map(|c| c.to_string()).unwrap_or_default())
+                .collect();
+            for (i, v) in values.iter().enumerate() {
+                if !v.is_empty() && columns[i].sample_values.len() < 5 {
+                    columns[i].sample_values.push(v.clone());
+                }
+            }
+            rows.push(values);
+        }
+        let total_rows = rows.len();
+        Ok(ExcelData { sheet_name, columns, rows, total_rows })
+    }
+
+    fn read_xlsx(path: &str) -> Result<ExcelData, String> {
+        let mut workbook: Xlsx<_> = open_workbook(path)
+            .map_err(|e| format!("无法打开 .xlsx 文件: {}", e))?;
+        let sheet_names = workbook.sheet_names().to_vec();
+        if sheet_names.is_empty() {
+            return Err(format!("文件 '{}' 中没有工作表", path));
         }
         let sheet_name = sheet_names[0].clone();
         let range = workbook.worksheet_range(&sheet_name)
